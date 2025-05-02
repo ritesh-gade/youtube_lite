@@ -1,35 +1,69 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
 - main
 
 pool:
- name: "agentcicd"
+  name: "agentcicd"
 
 stages:
-  - stage: Stage_A
-    displayName: This is Stage A
+  - stage: Build_Image
+    displayName: Build Docker Image
     jobs:
-      - job: Job_A
-        displayName: This is Job_A
+      - job: Build_Image
+        displayName: Build the Youtube Lite Image
         steps:
-          - script: echo "Stage A Completed"
+          - task: Docker@2
+            displayName: Build the Image
+            inputs:
+              containerRegistry: 'docker'
+              repository: '9881665778/youtube_lite'
+              command: 'build'
+              Dockerfile: '**/Dockerfile'
+              tags: |
+                latest
 
-  - stage: Stage_B
-    displayName: This is Stage B
+  - stage: Scan_Image
+    displayName: Scan Docker Image
+    dependsOn: Build_Image
     jobs:
-      - job: Job_B
-        displayName: This is Job_B
+      - job: Scan_Image
+        displayName: Scan with Trivy
         steps:
-          - script: echo "Stage B Completed"
+          - script: |
+              echo "Installing Trivy..."
+              wget -qO trivy.tar.gz https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.49.1_Linux-64bit.tar.gz
+              tar zxvf trivy.tar.gz
+              sudo mv trivy /usr/local/bin/
+              trivy --version
+            displayName: Install Trivy
 
-  - stage: Stage_C
-    displayName: This is Stage C
+          - script: |
+              trivy image 9881665778/youtube_lite:latest
+            displayName: Run Trivy Scan
+
+  - stage: Push_Image
+    displayName: Push Docker Image
+    dependsOn: Scan_Image
     jobs:
-      - job: Job_C
-        displayName: This is Job_C
+      - job: Push_Image
+        displayName: Push to Docker Hub
         steps:
-          - script: echo "Stage C Completed"       
+          - task: Docker@2
+            displayName: Push the Image
+            inputs:
+              containerRegistry: 'docker'
+              repository: '9881665778/youtube_lite'
+              command: 'push'
+              tags: |
+                latest
+
+  - stage: Deploy_Container
+    displayName: Deploy Container from Docker Image
+    dependsOn: Push_Image
+    jobs:
+      - job: Deploy_Container
+        displayName: Run Docker Container
+        steps:
+          - script: |
+              docker pull 9881665778/youtube_lite:latest
+              docker run -d -p 80:80 --name youtube_lite_container 9881665778/youtube_lite:latest
+            displayName: Run Docker Container

@@ -30,9 +30,10 @@ stages:
         steps:
           - script: |
               echo "Installing Trivy..."
-              sudo wget -qO trivy.tar.gz https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.49.1_Linux-64bit.tar.gz
+              wget -qO trivy.tar.gz https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.49.1_Linux-64bit.tar.gz
               tar zxvf trivy.tar.gz
-              sudo mv trivy /usr/local/bin/
+              chmod +x trivy
+              mv trivy /usr/local/bin/
               trivy --version
             displayName: Install Trivy
 

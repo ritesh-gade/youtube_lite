@@ -20,11 +20,10 @@ stages:
             displayName: Build the Image
             inputs:
               containerRegistry: 'docker'
-              repository: '$(dockerImage)'  # This will be "9881665778/youtube_lite"
+              repository: '$(dockerImage)'
               command: 'build'
               Dockerfile: '**/Dockerfile'
               tags: |
-                latest
                 $(Build.BuildId)
 
   - stage: Scan_Image
@@ -49,16 +48,6 @@ stages:
             displayName: Install Trivy
 
           - script: |
-              IMAGE="$(dockerImage):$(Build.BuildId)"
-              dockerUser=$(echo "$IMAGE" | cut -d'/' -f1)
-              repoName=$(echo "$IMAGE" | cut -d'/' -f2 | cut -d':' -f1)
-              echo "Extracted dockerUser: $dockerUser"
-              echo "Extracted repositoryName: $repoName"
-              echo "##vso[task.setvariable variable=dockerUser]$dockerUser"
-              echo "##vso[task.setvariable variable=repositoryName]$repoName"
-            displayName: Extract Docker Username and Repo Name
-
-          - script: |
               ./trivy image $(dockerImage):$(Build.BuildId) || true
             displayName: Run Trivy Scan
 
@@ -73,11 +62,10 @@ stages:
             displayName: Push the Image
             inputs:
               containerRegistry: 'docker'
-              repository: '$(dockerUser)/$(repositoryName)'  # Pushing to the dynamically extracted repository
+              repository: '$(dockerUser)/$(repositoryName)'
               command: 'push'
               tags: |
                 $(Build.BuildId)
-                latest
 
   - stage: Deploy_Container
     displayName: Deploy Container from Docker Image

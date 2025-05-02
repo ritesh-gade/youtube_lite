@@ -74,5 +74,5 @@ stages:
         steps:
           - script: |
               docker pull 9881665778/youtube_lite:latest
-              docker run -d -p 80:80 --name youtube_lite_container 9881665778/youtube_lite:latest
+              docker run -d -p 8099:80 --name youtube_lite_container 9881665778/youtube_lite:latest
             displayName: Run Docker Container

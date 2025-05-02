@@ -10,11 +10,24 @@ pool:
  name: "agentcicd"
 
 stages:
-  - stage: A_stage
-    displayName: This is Stage 1
+  - stage: Stage_A
+    displayName: This is Stage A
     jobs:
       - job: Job_A
-        displayName: This is Job A
+        displayName: This is Job_A
         steps:
-          - script: echo "This is Youtube Application"
-        
+          - script: echo "Stage A Completed"
+  - stage: Stage_B
+    displayName: This is Stage B
+    jobs:
+      - job: Job_B
+        displayName: This is Job_B
+        steps:
+          - script: echo "Stage B Completed"
+  - stage: Stage_C
+    displayName: This is Stage B
+    jobs:
+      - job: Job_B
+        displayName: This is Job_B
+        steps:
+          - script: echo "Stage B Completed"       

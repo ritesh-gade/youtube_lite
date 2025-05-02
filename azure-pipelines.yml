@@ -29,8 +29,14 @@ stages:
       displayName: Scan with Trivy
       steps:
         - script: |
+            echo "Checking system architecture..."
+            uname -a
+            uname -m
+          displayName: Check System Info
+
+        - script: |
             echo "Installing Trivy..."
-            curl -L -o trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v0.49.1/trivy_0.49.1_Linux-64bit.tar.gz
+            curl -L -o trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v0.49.1/trivy_0.49.1_Linux-ARM64.tar.gz
             tar -zxvf trivy.tar.gz
             chmod +x trivy
             ./trivy --version
@@ -39,6 +45,7 @@ stages:
         - script: |
             ./trivy image 9881665778/youtube_lite:latest || true
           displayName: Run Trivy Scan
+
 
 
 

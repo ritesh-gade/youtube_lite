@@ -25,9 +25,9 @@ stages:
         steps:
           - script: echo "Stage B Completed"
   - stage: Stage_C
-    displayName: This is Stage B
+    displayName: This is Stage C
     jobs:
-      - job: Job_B
-        displayName: This is Job_B
+      - job: Job_C
+        displayName: This is Job_C
         steps:
-          - script: echo "Stage B Completed"       
+          - script: echo "Stage C Completed"       

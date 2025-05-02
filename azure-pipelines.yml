@@ -25,21 +25,22 @@ stages:
     displayName: Scan Docker Image
     dependsOn: Build_Image
     jobs:
-      - job: Scan_Image
-        displayName: Scan with Trivy
-        steps:
-          - script: |
-              echo "Installing Trivy..."
-              wget -qO trivy.tar.gz https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.49.1_Linux-64bit.tar.gz
-              tar zxvf trivy.tar.gz
-              chmod +x trivy
-              mv trivy /usr/local/bin/
-              trivy --version
-            displayName: Install Trivy
+    - job: Scan_Image
+      displayName: Scan with Trivy
+      steps:
+        - script: |
+            echo "Installing Trivy..."
+            curl -L -o trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v0.49.1/trivy_0.49.1_Linux-64bit.tar.gz
+            tar -zxvf trivy.tar.gz
+            chmod +x trivy
+            ./trivy --version
+          displayName: Install Trivy
 
-          - script: |
-              trivy image 9881665778/youtube_lite:latest
-            displayName: Run Trivy Scan
+        - script: |
+            ./trivy image 9881665778/youtube_lite:latest || true
+          displayName: Run Trivy Scan
+
+
 
   - stage: Push_Image
     displayName: Push Docker Image

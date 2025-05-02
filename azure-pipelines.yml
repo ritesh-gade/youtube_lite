@@ -4,6 +4,11 @@ trigger:
 pool:
   name: "agentcicd"
 
+variables:
+  - group: docker-variables
+  - name: dockerImage 
+    value: "$(dockerUser)/$(repositoryName)"  
+
 stages:
   - stage: Build_Image
     displayName: Build Docker Image
@@ -15,39 +20,47 @@ stages:
             displayName: Build the Image
             inputs:
               containerRegistry: 'docker'
-              repository: '9881665778/youtube_lite'
+              repository: '$(dockerImage)'  # This will be "9881665778/youtube_lite"
               command: 'build'
               Dockerfile: '**/Dockerfile'
               tags: |
                 latest
+                $(Build.BuildId)
 
   - stage: Scan_Image
     displayName: Scan Docker Image
     dependsOn: Build_Image
     jobs:
-    - job: Scan_Image
-      displayName: Scan with Trivy
-      steps:
-        - script: |
-            echo "Checking system architecture..."
-            uname -a
-            uname -m
-          displayName: Check System Info
+      - job: Scan_Image
+        displayName: Scan with Trivy
+        steps:
+          - script: |
+              echo "Checking system architecture..."
+              uname -a
+              uname -m
+            displayName: Check System Info
 
-        - script: |
-            echo "Installing Trivy..."
-            curl -L -o trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v0.49.1/trivy_0.49.1_Linux-ARM64.tar.gz
-            tar -zxvf trivy.tar.gz
-            chmod +x trivy
-            ./trivy --version
-          displayName: Install Trivy
+          - script: |
+              echo "Installing Trivy..."
+              curl -L -o trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v0.49.1/trivy_0.49.1_Linux-ARM64.tar.gz
+              tar -zxvf trivy.tar.gz
+              chmod +x trivy
+              ./trivy --version
+            displayName: Install Trivy
 
-        - script: |
-            ./trivy image 9881665778/youtube_lite:latest || true
-          displayName: Run Trivy Scan
+          - script: |
+              IMAGE="$(dockerImage):$(Build.BuildId)"
+              dockerUser=$(echo "$IMAGE" | cut -d'/' -f1)
+              repoName=$(echo "$IMAGE" | cut -d'/' -f2 | cut -d':' -f1)
+              echo "Extracted dockerUser: $dockerUser"
+              echo "Extracted repositoryName: $repoName"
+              echo "##vso[task.setvariable variable=dockerUser]$dockerUser"
+              echo "##vso[task.setvariable variable=repositoryName]$repoName"
+            displayName: Extract Docker Username and Repo Name
 
-
-
+          - script: |
+              ./trivy image $(dockerImage):$(Build.BuildId) || true
+            displayName: Run Trivy Scan
 
   - stage: Push_Image
     displayName: Push Docker Image
@@ -60,9 +73,10 @@ stages:
             displayName: Push the Image
             inputs:
               containerRegistry: 'docker'
-              repository: '9881665778/youtube_lite'
+              repository: '$(dockerUser)/$(repositoryName)'  # Pushing to the dynamically extracted repository
               command: 'push'
               tags: |
+                $(Build.BuildId)
                 latest
 
   - stage: Deploy_Container
@@ -73,6 +87,6 @@ stages:
         displayName: Run Docker Container
         steps:
           - script: |
-              docker pull 9881665778/youtube_lite:latest
-              docker run -d -p 8099:80 --name youtube_lite_container 9881665778/youtube_lite:latest
+              docker pull $(dockerUser)/$(repositoryName):$(Build.BuildId)
+              docker run -d -p 8099:80 --name $(repositoryName)_container $(dockerUser)/$(repositoryName):$(Build.BuildId)
             displayName: Run Docker Container

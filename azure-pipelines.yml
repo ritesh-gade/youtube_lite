@@ -7,13 +7,14 @@ trigger:
 - main
 
 pool:
- name: 'agentcicd'
+ name: "agentcicd"
 
 stages:
-  - stage: A
+  - stage: A_stage
+    displayName: This is Stage 1
     jobs:
-      - job: A_Job
+      - job: Job_A
+        displayName: This is Job A
         steps:
-          - script: echo "This is Youtube Lite App"
-    
- 
+          - script: echo "This is Youtube Application"
+        
